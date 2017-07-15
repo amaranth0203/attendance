@@ -1,0 +1,9 @@
+{% for val in values %}
+<xml>
+  <ToUserName><![CDATA[{{val.toUser}}]]></ToUserName>
+  <FromUserName><![CDATA[{{val.fromUser}}]]></FromUserName>
+  <CreateTime>{{val.createTime}}</CreateTime>
+  <MsgType><![CDATA[text]]></MsgType>
+  <Content><![CDATA[{{val.content}}]]></Content>
+</xml>
+{% endfor %}
