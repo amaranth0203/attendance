@@ -1,6 +1,7 @@
 from time import gmtime, strftime
 from datetime import datetime
-import urllib , cStringIO
+import urllib
+from io import StringIO
 from PIL import Image, ImageDraw, ImageFont
 font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', size=44)
 def add_text_to_image(image, text , font=font , fill=(0,0,0,180),ray=0):
