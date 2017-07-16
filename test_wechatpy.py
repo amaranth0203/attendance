@@ -1,29 +1,20 @@
 
-from sqlite3 import dbapi2 as sqlite3
-from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash, _app_ctx_stack , make_response
+# -*- coding: utf-8 -*-
+from flask import Flask, request
 
+from wechatpy import WeChatClient , parse_message
 from wechatpy.utils import check_signature
 from wechatpy.exceptions import InvalidSignatureException
+from wechatpy.replies import TextReply , ImageReply
 
-import urllib
-from PIL import Image, ImageDraw, ImageFont
-from datetime import datetime
-from add_watermark import add_text_to_image
-
-import reply , json , requests
-import io
-from io import StringIO
+from toolkit import add_watermark
 
 token = 'xjj'
 appId = 'wx0bf5a881e5a22886'
 appSecret = 'a301e26f45585c26823d24be7a4b2fda'
-getTokenResult = urllib.request.urlopen( r'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=' + appId + '&secret=' + appSecret )
-tokenJson = json.loads( getTokenResult.read( ).decode('utf-8') )
-access_token = tokenJson['access_token']
-
 app = Flask(__name__)
 app.config.from_object(__name__)
+client = WeChatClient( appId , appSecret )
 
 @app.route('/weixin' , methods=['GET','POST'])
 def weixin( ) :
@@ -34,48 +25,39 @@ def weixin( ) :
         timestamp =	request.values.get( 'timestamp' )
         nonce =		request.values.get( 'nonce' )
         echostr =	request.values.get( 'echostr' )
-        token = 'xjj'		
-        list = [ token , timestamp , nonce ]
-        list.sort( )
-        sha1 = hashlib.sha1( )
-        map( sha1.update , list )
-        hashcode = sha1.hexdigest( )
-        if hashcode == signature :
+        global token
+        try :
+            check_signature( 
+                token , 
+                signature , 
+                timestamp , 
+                nonce 
+            )
             return echostr
-        else :
-            return echostr+'failed'
+        except InvalidSignatureException : 
+            return echostr + 'failed'
     elif request.method == 'POST' :
         str_xml = request.data
-        xml = etree.fromstring( str_xml )
-        msgType = 	xml.find( "MsgType" ).text
-        fromUser = 	xml.find( "FromUserName" ).text
-        toUser = 	xml.find( "ToUserName" ).text
+        msg = parse_message( str_xml )
         print( str_xml )
-        if msgType == 'text' :
-            content = 	xml.find( "Content" ).text
-            values = [
-                { 'toUser':fromUser , 'fromUser':toUser , 'createTime':int( time.time( ) ) , 'content' : u'u just say : ' + content },
-            ]
-            template = render_template( 'reply_text.xml' , values = values )
-            response = make_response( template )
-            response.headers['Content-Type'] = 'application/xml'
-            return response
-        elif msgType == 'image' :
-            PicUrl = xml.find( "PicUrl" ).text
-            watermark = "marked at " + str(datetime.now()) + "\nby qiyunhu@gxxd"
-            im_before = Image.open(io.BytesIO(urllib.request.urlopen(PicUrl).read()))
-            icc_profile = im_before.info.get("icc_profile")
-            im_after = add_text_to_image(im_before, watermark,fill=(255,255,255,255))
-            im_after = add_text_to_image(im_after, watermark,fill=(0,0,0,255),ray=1)
-            sio = io.BytesIO( )
-            im_after.save( sio , format='jpeg' , icc_profile=icc_profile )
-            files = { 'media' : ( 'temp.jpg' , sio.getvalue() ) }
-            upload_url="https://api.weixin.qq.com/cgi-bin/media/upload?access_token=" + access_token + "&type=image" # set your access_token
-            r=requests.post(upload_url, files=files) # upload 
-            media_id=json.loads(r.content.decode('utf-8'))['media_id']
-            replyMsg = reply.ImageMsg( fromUser , toUser , media_id )
-            return replyMsg.send( )
+        if msg.type == 'text' :
+            return TextReply( 
+                content = 'u just say : ' + msg.content , 
+                message = msg 
+            ).render( )
+        elif msg.type == 'image' :
+            return ImageReply( 
+                media_id = add_watermark(
+                    msg.media_id ,
+                    appId ,
+                    appSecret
+                ).get_media_id_with_watermark( ) , 
+                message = msg 
+            ).render( )
     return 'wassup'
 
 if __name__ == '__main__':
-    app.run(host="10.135.22.157",port=80)
+    app.run(
+        host = "10.135.22.157" ,
+        port = 80
+    )
