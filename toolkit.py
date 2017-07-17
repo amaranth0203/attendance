@@ -33,6 +33,7 @@ class add_watermark( object ) :
         client = WeChatClient( self.app_id , self.app_secret )
         pic_url = client.media.get_url( self.media_id )
         im_before = Image.open( io.BytesIO( urllib.request.urlopen( pic_url ).read( ) ) )
+        #im_before.save( 'tetete.jpg' , format='jpeg' )
         icc_profile = im_before.info.get( "icc_profile" )
         im_after = self.add_text_to_image( im_before , self.watermark , fill = ( 255 , 255 , 255 , 255 ) )
         im_after = self.add_text_to_image( im_after , self.watermark , fill = ( 0 , 0 , 0 , 255 ) , ray = 1 )
