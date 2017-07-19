@@ -12,11 +12,10 @@ from toolkit import add_watermark
 token = 'xjj'
 appId = 'wx0bf5a881e5a22886'
 appSecret = 'a301e26f45585c26823d24be7a4b2fda'
-app = Flask(__name__)
-app.config.from_object(__name__)
+application = Flask(__name__)
 client = WeChatClient( appId , appSecret )
 
-@app.route('/weixin' , methods=['GET','POST'])
+@application.route('/weixin' , methods=['GET','POST'])
 def weixin( ) :
     import hashlib , lxml , time , os , json 
     from lxml import etree
@@ -57,7 +56,9 @@ def weixin( ) :
     return 'wassup'
 
 if __name__ == '__main__':
-    app.run(
+    application.run(
         host = "10.135.22.157" ,
-        port = 80
+#        host = '127.0.0.1' , 
+        port = 443 ,
+        ssl_context = 'adhoc'
     )
