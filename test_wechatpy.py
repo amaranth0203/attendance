@@ -55,6 +55,16 @@ def weixin( ) :
             ).render( )
     return 'wassup'
 
+@application.route('/')
+def hello( ) :
+    return 'wassup in index'
+
+@application.route('/mini' , methods=['GET','POST'])
+def mini( ) :
+    if request.method == 'POST' :
+        print( request.data )
+    return 'function mini return \'wassup\''
+
 if __name__ == '__main__':
     application.run(
         host = "10.135.22.157" ,
