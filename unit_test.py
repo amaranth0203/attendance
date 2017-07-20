@@ -1,12 +1,36 @@
 
 # -*- coding: utf-8 -*-
-from sqlalchemy import create_engine , MetaData , Table
-from sqlalchemy.orm import sessionmaker , mapper
+from sqlalchemy import create_engine , MetaData , Table , func
+from sqlalchemy.orm import sessionmaker , mapper , relationship
+from sqlalchemy.ext.declarative import declarative_base
 
 
 import unittest
 
-class Class( object ) :
+engine = create_engine( 'mysql+pymysql://attendance:echo@localhost/attendance?charset=utf8' , echo=False , encoding='utf-8' )
+metadata = MetaData( engine )
+Base = declarative_base( )
+Base.metadata = metadata
+
+class Class( Base ) :
+    __table__ = Table( 'class' , metadata , autoload = True )
+    class_teacher = relationship( 'Class_teacher' , backref = 'class' )
+    def __repr__( self ) :
+        return 'Class-id : %d' % self.id ;
+class Class_teacher( Base ) :
+    __table__ = Table( 'class_teacher' , metadata , autoload = True )
+    def __repr__( self ) :
+        return 'Class_teacher-id : %d' % self.id ;
+class Student( object ) :
+    __table__ = Table( 'student' , metadata , autoload = True )
+    def __repr__( self ) :
+        return 'Student-id : %d' % self.id ;
+class Dormitory( object ) :
+    __table__ = Table( 'dormitory' , metadata , autoload = True )
+    def __repr__( self ) :
+        return 'Dormitory-id : %d' % self.id ;
+class _class_to_dormitory :
+    __table__ = Table( '_class_to_dormitory' , metadata , autoload = True )
     pass
 
 class TestSQLAlchemy( unittest.TestCase ) :
@@ -89,6 +113,34 @@ class TestSQLAlchemy( unittest.TestCase ) :
         mapper( Class , class_t )
         session.query( Class ).filter( Class.id > 2 ).delete( )
         session.commit( )
+
+    def test_add2( self ) :
+        print( '[+] test_add2' )
+#        metadata = MetaData( self.engine )
+#        class_t = Table( 'class' , metadata , autoload = True )
+#        student_t = Table( 'student' , metadata , autoload = True )
+#        dormitory_t = Table( 'dormitory' , metadata , autoload = True )
+#        class_teacher_t = Table( 'class_teacher' , metadata , autoload = True )
+#        _class_to_dormitory_t = Table( '_class_to_dormitory' , metadata , autoload = True )
+        Session = sessionmaker( self.engine )
+        session = Session( )
+#        mapper( Class , class_t , non_primary = True )
+#        mapper( Student , student_t )
+#        mapper( Dormitory , dormitory_t )
+#        mapper( Class_teacher , class_teacher_t , non_primary = True )
+#        mapper( _class_to_dormitory , _class_to_dormitory_t )
+        c = session.query( Class ).first( )
+        print( '----------------------------------------' )
+        print( c.class_teacher )
+        print( '----------------------------------------' )
+#        t = session.query( Student ).first( )
+#        print( session.query( Student ).join( Class , isouter = True ).filter( Class.id == 2 ).all( ) )
+#        dormitory_obj = session.query( Dormitory ).filter( Dormitory.id == 3 ).first( )
+#        class_to_dormitory = session.query( _class_to_dormitory.class_id ).filter( _class_to_dormitory.dormitory_id == dormitory_obj.id ).all( )
+#        r = zip( *class_to_dormitory )
+#        print( '----' )
+#        print( session.query( Class ).filter( Class.id.in_(list(list(r)[0])) ).all( ) )
+#        print( '****' )
 
     
 
