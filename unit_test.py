@@ -15,40 +15,74 @@ metadata = MetaData( engine )
 Base = declarative_base( )
 Base.metadata = metadata
 
-class _class_to_dormitory( Base ) :
-    __table__ = Table( '_class_to_dormitory' , Base.metadata , autoload = True )
-    dormitory = relationship( "Dormitory" , back_populates = "classes" )
-    classs = relationship( "Class" , back_populates = "dormitories" )
-class Class( Base ) :
-    __table__ = Table( 'class' , metadata , autoload = True )
-    class_teacher = relationship( 'Class_teacher' , backref = 'class' )
-    dormitories = relationship(  '_class_to_dormitory' ,
-                               back_populates = 'classs' )
-    def __repr__( self ) :
-        return 'Class-id : %d' % self.id ;
-class Dormitory( Base ) :
-    __table__ = Table( 'dormitory' , metadata , autoload = True )
-    classes = relationship( '_class_to_dormitory' ,
-                          back_populates = 'dormitory' )
-    def __repr__( self ) :
-        return 'Dormitory-id : %d' % self.id ;
-class Class_teacher( Base ) :
-    __table__ = Table( 'class_teacher' , metadata , autoload = True )
-    def __repr__( self ) :
-        return 'Class_teacher-id : %d' % self.id ;
-class Student( Base ) :
+class _claxx_teacher_to_building( Base ) :
+    __table__ = Table( '_claxx_teacher_to_building' , metadata , autoload = True )
+    claxx_teacher = relationship( 'claxx_teacher' , back_populates = 'buildings' )
+    building = relationship( "building" , back_populates = "claxx_teachers" )
+class _claxx_teacher_to_dormitory( Base ) :
+    __table__ = Table( '_claxx_teacher_to_dormitory' , metadata , autoload = True )
+    claxx_teacher = relationship( 'claxx_teacher' , back_populates = 'dormitories' )
+    dormitory = relationship( 'dormitory' , back_populates = 'claxx_teachers' )
+class _claxx_to_dormitory( Base ) :
+    __table__ = Table( '_claxx_to_dormitory' , metadata , autoload = True )
+    dormitory = relationship( "dormitory" , back_populates = "claxxes" )
+    claxx = relationship( "claxx" , back_populates = "dormitories" )
+class _claxx_to_building( Base ) :
+    __table__ = Table( '_claxx_to_building' , metadata , autoload = True )
+    building = relationship( "building" , back_populates = "claxxes" )
+    claxx = relationship( "claxx" , back_populates = "buildings" )
+
+class student( Base ) :
     __table__ = Table( 'student' , metadata , autoload = True )
+    claxx = relationship( 'claxx' , back_populates = 'students' )
+    claxx_teacher = relationship( 'claxx_teacher' , back_populates = 'students' )
+    dormitory = relationship( 'dormitory' , back_populates = 'students' )
+    building = relationship( 'building' , back_populates = 'students' )
     def __repr__( self ) :
-        return 'Student-id : %d' % self.id ;
+        return 'student-id : %d' % self.id
+class claxx_teacher( Base ) :
+    __table__ = Table( 'claxx_teacher' , metadata , autoload = True )
+    dormitories = relationship( '_claxx_teacher_to_dormitory' , back_populates = 'claxx_teacher' )
+    buildings = relationship( '_claxx_teacher_to_building' , back_populates = 'claxx_teacher' )
+    students = relationship( 'student' , back_populates = 'claxx_teacher' )
+    claxxes = relationship( 'claxx' , back_populates = 'claxx_teacher' )
+    def __repr__( self ) :
+        return 'claxx_teacher-id : %d' % self.id
+class claxx( Base ) :
+    __table__ = Table( 'claxx' , metadata , autoload = True )
+    dormitories = relationship( '_claxx_to_dormitory' , back_populates = 'claxx' )
+    buildings = relationship( '_claxx_to_building' , back_populates = 'claxx' )
+    students = relationship( 'student' , back_populates = 'claxx' )
+    claxx_teacher = relationship( 'claxx_teacher' , back_populates = 'claxxes' )
+    def __repr__( self ) :
+        return 'claxx-id : %d' % self.id
+class dormitory( Base ) :
+    __table__ = Table( 'dormitory' , metadata , autoload = True )
+    claxxes = relationship( '_claxx_to_dormitory' , back_populates = 'dormitory' )
+    claxx_teachers = relationship( '_claxx_teacher_to_dormitory' , back_populates = 'dormitory' )
+    students = relationship( 'student' , back_populates = 'dormitory' )
+    building = relationship( 'building' , back_populates = 'dormitories' )
+    def __repr__( self ) :
+        return 'dormitory-id : %d' % self.id
+class building( Base ) :
+    __table__ = Table( 'building' , metadata , autoload = True )
+    claxxes = relationship( '_claxx_to_building' , back_populates = 'building' )
+    claxx_teachers = relationship( '_claxx_teacher_to_building' , back_populates = 'building' )
+    students = relationship( 'student' , back_populates = 'building' )
+    dormitories = relationship( 'dormitory' , back_populates = 'building' )
+    def __repr__( self ) :
+        return 'building-id : %d' % self.id
 
 class TestSQLAlchemy( unittest.TestCase ) :
 
     def setUp( self ) :
+        pass
         self.engine = create_engine( 'mysql+pymysql://attendance:echo@localhost/attendance?charset=utf8' , echo=False , encoding='utf-8' )
-        print( '\n[+] setUp...' )
+#        print( '\n[+] setUp...' )
 
     def tearDown( self ) :
-        print( '[+] tearDown...' )
+        pass
+#        print( '[+] tearDown...' )
 
     def ttest_init( self ) :
         self.assertEqual( 'a' , 'a' )
@@ -122,11 +156,12 @@ class TestSQLAlchemy( unittest.TestCase ) :
         session.query( Class ).filter( Class.id > 2 ).delete( )
         session.commit( )
 
-    def test_add2( self ) :
+    def ttest_add2( self ) :
         print( '[+] test_add2' )
         Session = sessionmaker( self.engine )
         session = Session( )
-        c = session.query( Class ).first( )
+        c = session.query( claxx ).first( )
+        s = session.query( student ).first( )
 #        assoc = _class_to_dormitory( )
 #        assoc.classs = c
 #        d = Dormitory( )
@@ -136,8 +171,9 @@ class TestSQLAlchemy( unittest.TestCase ) :
 #        session.commit( )
         print( '----------------------------------------' )
         print( c )
-        for assoc in c.dormitories :
-            print( assoc.dormitory )
+        print( c.students )
+        print( s.claxx == c )
+        print( [ assoc.dormitory for assoc in c.dormitories ] )
         print( '----------------------------------------' )
 
 #        t = session.query( Student ).first( )
@@ -149,8 +185,26 @@ class TestSQLAlchemy( unittest.TestCase ) :
 #        print( session.query( Class ).filter( Class.id.in_(list(list(r)[0])) ).all( ) )
 #        print( '****' )
 
-    
+    def test_student( self ) :
+        print( '[+] test_student' )
+        session = sessionmaker( self.engine )( )
+        s = session.query( student ).filter( student.id == 1 ).first( )
+        ct = session.query( claxx_teacher ).join( student ).filter( student.id == 1 ).first( )
+        d = session.query( dormitory ).join( student ).filter( student.id == 1 ).first( )
+        c = session.query( claxx ).join( student ).filter( student.id == 1 ).first( )
+        b = session.query( building ).join( student ).filter( student.id == 1 ).first( )
+        self.assertEqual( s.claxx_teacher , ct )
+        self.assertEqual( s.dormitory , d )
+        self.assertEqual( s.claxx , c )
+        self.assertEqual( s.building , b )
 
+    def test_claxx_teacher( self ) :
+        print( '[+] test_claxx_teacher' )
+        session = sessionmaker( self.engine )( )
+        t = session.query( claxx_teacher ).filter( student.id == 1 ).first( )
+#        self.assertEqual( t.
+        
+    
 if __name__ == '__main__' :
     unittest.main( )
             
