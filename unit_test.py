@@ -4,6 +4,9 @@ from sqlalchemy import create_engine , MetaData , Table , func
 from sqlalchemy.orm import sessionmaker , mapper , relationship
 from sqlalchemy.ext.declarative import declarative_base
 
+from sqlalchemy import *
+from sqlalchemy.orm import *
+
 
 import unittest
 
@@ -12,26 +15,31 @@ metadata = MetaData( engine )
 Base = declarative_base( )
 Base.metadata = metadata
 
+class _class_to_dormitory( Base ) :
+    __table__ = Table( '_class_to_dormitory' , Base.metadata , autoload = True )
+    dormitory = relationship( "Dormitory" , back_populates = "classes" )
+    classs = relationship( "Class" , back_populates = "dormitories" )
 class Class( Base ) :
     __table__ = Table( 'class' , metadata , autoload = True )
     class_teacher = relationship( 'Class_teacher' , backref = 'class' )
+    dormitories = relationship(  '_class_to_dormitory' ,
+                               back_populates = 'classs' )
     def __repr__( self ) :
         return 'Class-id : %d' % self.id ;
+class Dormitory( Base ) :
+    __table__ = Table( 'dormitory' , metadata , autoload = True )
+    classes = relationship( '_class_to_dormitory' ,
+                          back_populates = 'dormitory' )
+    def __repr__( self ) :
+        return 'Dormitory-id : %d' % self.id ;
 class Class_teacher( Base ) :
     __table__ = Table( 'class_teacher' , metadata , autoload = True )
     def __repr__( self ) :
         return 'Class_teacher-id : %d' % self.id ;
-class Student( object ) :
+class Student( Base ) :
     __table__ = Table( 'student' , metadata , autoload = True )
     def __repr__( self ) :
         return 'Student-id : %d' % self.id ;
-class Dormitory( object ) :
-    __table__ = Table( 'dormitory' , metadata , autoload = True )
-    def __repr__( self ) :
-        return 'Dormitory-id : %d' % self.id ;
-class _class_to_dormitory :
-    __table__ = Table( '_class_to_dormitory' , metadata , autoload = True )
-    pass
 
 class TestSQLAlchemy( unittest.TestCase ) :
 
@@ -116,23 +124,22 @@ class TestSQLAlchemy( unittest.TestCase ) :
 
     def test_add2( self ) :
         print( '[+] test_add2' )
-#        metadata = MetaData( self.engine )
-#        class_t = Table( 'class' , metadata , autoload = True )
-#        student_t = Table( 'student' , metadata , autoload = True )
-#        dormitory_t = Table( 'dormitory' , metadata , autoload = True )
-#        class_teacher_t = Table( 'class_teacher' , metadata , autoload = True )
-#        _class_to_dormitory_t = Table( '_class_to_dormitory' , metadata , autoload = True )
         Session = sessionmaker( self.engine )
         session = Session( )
-#        mapper( Class , class_t , non_primary = True )
-#        mapper( Student , student_t )
-#        mapper( Dormitory , dormitory_t )
-#        mapper( Class_teacher , class_teacher_t , non_primary = True )
-#        mapper( _class_to_dormitory , _class_to_dormitory_t )
         c = session.query( Class ).first( )
+#        assoc = _class_to_dormitory( )
+#        assoc.classs = c
+#        d = Dormitory( )
+#        d.classes.append( assoc )
+#        session.add( d )
+#        session.flush( )
+#        session.commit( )
         print( '----------------------------------------' )
-        print( c.class_teacher )
+        print( c )
+        for assoc in c.dormitories :
+            print( assoc.dormitory )
         print( '----------------------------------------' )
+
 #        t = session.query( Student ).first( )
 #        print( session.query( Student ).join( Class , isouter = True ).filter( Class.id == 2 ).all( ) )
 #        dormitory_obj = session.query( Dormitory ).filter( Dormitory.id == 3 ).first( )
