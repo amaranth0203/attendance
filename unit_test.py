@@ -32,12 +32,21 @@ class _claxx_to_building( Base ) :
     building = relationship( "building" , back_populates = "claxxes" )
     claxx = relationship( "claxx" , back_populates = "buildings" )
 
+class wechat( Base ) :
+    __table__ = Table( 'wechat' , metadata , autoload = True )
+    user = relationship( 'user' , back_populates = 'wechats' )
+class user( Base ) :
+    __table__ = Table( 'user' , metadata , autoload = True )
+    student = relationship( 'student' , uselist = False , back_populates = 'user' )
+    claxx_teacher = relationship( 'claxx_teacher' , uselist = False , back_populates = 'user' )
+    wechats = relationship( 'wechat' , back_populates = 'user' )
 class student( Base ) :
     __table__ = Table( 'student' , metadata , autoload = True )
     claxx = relationship( 'claxx' , back_populates = 'students' )
     claxx_teacher = relationship( 'claxx_teacher' , back_populates = 'students' )
     dormitory = relationship( 'dormitory' , back_populates = 'students' )
     building = relationship( 'building' , back_populates = 'students' )
+    user = relationship( 'user' , back_populates = 'student' )
     def __repr__( self ) :
         return 'student-id : %d' % self.id
 class claxx_teacher( Base ) :
@@ -46,6 +55,7 @@ class claxx_teacher( Base ) :
     buildings = relationship( '_claxx_teacher_to_building' , back_populates = 'claxx_teacher' )
     students = relationship( 'student' , back_populates = 'claxx_teacher' )
     claxxes = relationship( 'claxx' , back_populates = 'claxx_teacher' )
+    user = relationship( 'user' , back_populates = 'claxx_teacher' )
     def __repr__( self ) :
         return 'claxx_teacher-id : %d' % self.id
 class claxx( Base ) :
@@ -156,12 +166,14 @@ class TestSQLAlchemy( unittest.TestCase ) :
         session.query( Class ).filter( Class.id > 2 ).delete( )
         session.commit( )
 
-    def ttest_add2( self ) :
+    def test_add2( self ) :
         print( '[+] test_add2' )
         Session = sessionmaker( self.engine )
         session = Session( )
         c = session.query( claxx ).first( )
         s = session.query( student ).first( )
+        d = session.query( dormitory ).filter( dormitory.id == 3 ).first( )
+        ct = session.query( claxx_teacher ).filter( claxx_teacher.id == 1 ).first( )
 #        assoc = _class_to_dormitory( )
 #        assoc.classs = c
 #        d = Dormitory( )
@@ -173,7 +185,11 @@ class TestSQLAlchemy( unittest.TestCase ) :
         print( c )
         print( c.students )
         print( s.claxx == c )
+        print( s.claxx_teacher )
         print( [ assoc.dormitory for assoc in c.dormitories ] )
+        print( '-----------------*-----------------------' )
+        print( [ assoc.claxx_teacher for assoc in d.claxx_teachers ] )
+        print( [ assoc.dormitory for assoc in ct.dormitories ] )
         print( '----------------------------------------' )
 
 #        t = session.query( Student ).first( )
@@ -197,6 +213,17 @@ class TestSQLAlchemy( unittest.TestCase ) :
         self.assertEqual( s.dormitory , d )
         self.assertEqual( s.claxx , c )
         self.assertEqual( s.building , b )
+        s1 = student( )
+        s1.name = 'tester'
+        s1.student_number = 'tester_number'
+        u = user( )
+        u.username = s1.name
+        s1.user = u
+        session.add(s1)
+        session.flush( )
+        session.commit( )
+#        u = session.query( user ).filter( user.student.name == 'tester' ).all( )
+#        print( u.id )
 
     def test_claxx_teacher( self ) :
         print( '[+] test_claxx_teacher' )

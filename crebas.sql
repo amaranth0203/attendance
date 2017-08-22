@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     2017/7/21 21:19:13                           */
+/* Created on:     2017/7/22 19:39:13                           */
 /*==============================================================*/
 
 
@@ -36,8 +36,9 @@ drop table if exists attendance.wechat;
 create table attendance._claxx_teacher_to_building
 (
    claxx_teacher_id     bigint not null,
+   number               varchar(128) not null,
    building_id          bigint not null,
-   primary key (claxx_teacher_id, building_id)
+   primary key (claxx_teacher_id, number, building_id)
 );
 
 /*==============================================================*/
@@ -46,8 +47,9 @@ create table attendance._claxx_teacher_to_building
 create table attendance._claxx_teacher_to_dormitory
 (
    claxx_teacher_id     bigint not null,
+   number               varchar(128) not null,
    dormitory_id         bigint not null,
-   primary key (claxx_teacher_id, dormitory_id)
+   primary key (claxx_teacher_id, number, dormitory_id)
 );
 
 /*==============================================================*/
@@ -88,6 +90,7 @@ create table attendance.claxx
    id                   bigint not null auto_increment,
    name                 varchar(128),
    claxx_teacher_id     bigint,
+   number               varchar(128),
    primary key (id)
 );
 
@@ -99,9 +102,9 @@ create table attendance.claxx_teacher
    id                   bigint not null auto_increment,
    name                 varchar(128),
    cellphone            varchar(128),
-   number               varchar(128),
+   number               varchar(128) not null,
    user_id              bigint,
-   primary key (id),
+   primary key (id, number),
    unique key UNI_claxx_teacher_fk_to_user (user_id)
 );
 
@@ -150,14 +153,17 @@ create table attendance.student
    id                   bigint not null auto_increment,
    name                 varchar(128),
    cellphone            varchar(128),
-   student_number       varchar(128),
+   student_number       varchar(128) not null,
    non_resident         boolean,
    claxx_teacher_id     bigint,
+   number               varchar(128),
    dormitory_id         bigint,
    claxx_id             bigint,
    building_id          bigint,
    user_id              bigint,
-   primary key (id)
+   department           varchar(128),
+   primary key (id, student_number),
+   unique key AK_Key_2 (user_id)
 );
 
 /*==============================================================*/
@@ -177,20 +183,20 @@ create table attendance.user
 create table attendance.wechat
 (
    id                   bigint not null auto_increment,
-   nickname             varchar(128),
    openid               varchar(128),
    user_id              bigint,
+   user_type            varchar(128),
    primary key (id)
 );
 
 alter table attendance._claxx_teacher_to_building add constraint FK_fk_cttb_to_building foreign key (building_id)
       references attendance.building (id) on delete restrict on update restrict;
 
-alter table attendance._claxx_teacher_to_building add constraint FK_fk_cttb_to_claxx_teacher foreign key (claxx_teacher_id)
-      references attendance.claxx_teacher (id) on delete restrict on update restrict;
+alter table attendance._claxx_teacher_to_building add constraint FK_fk_cttb_to_claxx_teacher foreign key (claxx_teacher_id, number)
+      references attendance.claxx_teacher (id, number) on delete restrict on update restrict;
 
-alter table attendance._claxx_teacher_to_dormitory add constraint FK_fk_cttd_to_claxx_teacher foreign key (claxx_teacher_id)
-      references attendance.claxx_teacher (id) on delete restrict on update restrict;
+alter table attendance._claxx_teacher_to_dormitory add constraint FK_fk_cttd_to_claxx_teacher foreign key (claxx_teacher_id, number)
+      references attendance.claxx_teacher (id, number) on delete restrict on update restrict;
 
 alter table attendance._claxx_teacher_to_dormitory add constraint FK_fk_cttd_to_dormitory foreign key (dormitory_id)
       references attendance.dormitory (id) on delete restrict on update restrict;
@@ -207,8 +213,8 @@ alter table attendance._claxx_to_dormitory add constraint FK_fk_ctd_to_claxx_id 
 alter table attendance._claxx_to_dormitory add constraint FK_fk_ctd_to_dormitory_id foreign key (dormitory_id)
       references attendance.dormitory (id) on delete restrict on update restrict;
 
-alter table attendance.claxx add constraint FK_fk_claxx_to_claxx_teacher_id foreign key (claxx_teacher_id)
-      references attendance.claxx_teacher (id) on delete restrict on update restrict;
+alter table attendance.claxx add constraint FK_fk_claxx_to_claxx_teacher_id foreign key (claxx_teacher_id, number)
+      references attendance.claxx_teacher (id, number) on delete restrict on update restrict;
 
 alter table attendance.claxx_teacher add constraint FK_fk_claxx_teacher_to_user foreign key (user_id)
       references attendance.user (id) on delete restrict on update restrict;
@@ -228,8 +234,8 @@ alter table attendance.student add constraint FK_fk_student_to_building_id forei
 alter table attendance.student add constraint FK_fk_student_to_claxx_id foreign key (claxx_id)
       references attendance.claxx (id) on delete restrict on update restrict;
 
-alter table attendance.student add constraint FK_fk_student_to_claxx_teacher_id foreign key (claxx_teacher_id)
-      references attendance.claxx_teacher (id) on delete restrict on update restrict;
+alter table attendance.student add constraint FK_fk_student_to_claxx_teacher_id foreign key (claxx_teacher_id, number)
+      references attendance.claxx_teacher (id, number) on delete restrict on update restrict;
 
 alter table attendance.student add constraint FK_fk_student_to_dormitory_id foreign key (dormitory_id)
       references attendance.dormitory (id) on delete restrict on update restrict;

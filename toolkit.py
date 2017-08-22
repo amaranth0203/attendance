@@ -45,3 +45,13 @@ class add_watermark( object ) :
         self.media_id_after = json.loads( r.content.decode('utf-8') )['media_id']
     def get_media_id_with_watermark( self ) :
         return self.media_id_after
+
+
+
+
+
+    
+
+
+
+
